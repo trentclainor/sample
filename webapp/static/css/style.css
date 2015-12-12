@@ -1,0 +1,42 @@
+.row-xs-flex {
+  display: flex;
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
+}
+
+@media (min-width: 1200px) {
+  .container {
+/*    width: 970px;*/
+  }
+
+  .row-lg-flex {
+    display: flex;
+  }
+
+}
+
+.sidebar > .nav > li > a {
+    padding: 3px 10px;
+}
+
+h2.header, .h2.header {
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+
+.status {
+    width: 100px;
+}
+
+.table-nonfluid {
+    width: auto;
+}
+
+.input-small-width {
+    max-width: 80px;
+}
+
+#section button {
+    width:auto;
+}

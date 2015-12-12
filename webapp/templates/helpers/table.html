@@ -1,0 +1,82 @@
+{% macro render_table(header, items, total, default_sort='', default_dir='', extra=None) %}
+<table class="table table-hover table-condensed table-striped">
+{{ render_table_header(header, default_sort, default_dir) }}
+{{ render_table_row(header, items) }}
+{{ render_table_total(header, total) }}
+</table>
+{% endmacro %}
+{% macro render_table_header(header, default_sort='', default_dir='', extra=None) %}
+    <thead>
+        <tr>
+        {% for sort, name in header %}
+            <th>
+                {% if extra['checkbox'] == sort %}
+                {{ name }}
+                {% elif sort and name %}
+                <div class="btn-group btn-group-xs row-xs-flex {% if request.args.get('dir', default_dir) == 'asc' %}dropup{% elif dir == default_dir %}dropup{% endif %}">
+                    <a href="{{ url_for_sort(sort, request.args.get('dir', default_dir)) }}" class="btn btn-link">{{ name }}</a>
+                    {% if sort == request.args['sort'] %}
+                    <button class="btn btn-link dropdown-toggle">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    {% elif not request.args['sort'] and sort == default_sort %}
+                    <button class="btn btn-link dropdown-toggle">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    {% else %}
+                    <button class="btn btn-link dropdown-toggle">
+                        <div style="width:8px"></div>
+                    </button>
+                    {% endif %}
+                </div>
+                {% elif name %}
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    <button class="btn btn-link" disabled>{{ name }}</button>
+                </div>
+                {% endif %}
+            </th>
+            {% endfor %}
+        </tr>
+    </thead>
+{% endmacro %}
+
+{% macro render_table_row(header, items) %}
+    <tbody>
+    {% for item in items %}
+    <tr>
+        {% for sort, name in header %}
+        {% if sort == 'id' %}
+            <td><small>{{ item.get_id() }}</small></td>
+        {% elif sort == 'cost' or sort == 'payout' or sort == 'income' %}
+            {% if item[sort] == None %}
+            <td><small>-</small></td>
+            {% else %}
+            <td><small>{{ item[sort] | money }}</small></td>
+            {% endif %}
+        {% elif sort %}
+        <td><small>{{ item[sort] }}</small></td>
+        {% endif %}
+        {% endfor %}
+    </tr>
+    {% endfor %}
+    </tbody>
+{% endmacro %}
+
+{% macro render_table_total(header, items) %}
+    <tfoot>
+    <tr class="info">
+        <td><small>{{ _('Итого') }}</small></td>
+{% for sort, name in header %}
+    {% if loop.index > 1 %}
+        {% if sort == 'cost' or sort == 'payout' or sort == 'income' %}
+        <td><small>{{ items[sort] | money }}</small></td>
+        {% else %}
+        <td><small>{{ items[sort] }}</small></td>
+        {% endif %}
+    {% endif %}
+{% endfor %}
+    </tr>
+    </tfoot>
+{% endmacro %}

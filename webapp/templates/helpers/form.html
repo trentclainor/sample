@@ -1,0 +1,87 @@
+{% macro render_field(field, is_submitted=False, csrf_enabled=True) %}
+{# {% set placeholder = field.description %} #}
+{% if field.type == 'CSRFTokenField' %}
+    {% if csrf_enabled %}
+    {{ field(**kwargs)|safe }}
+    {% endif %}
+{% elif field.type == 'HiddenField' %}
+    {{ field(**kwargs)|safe }}
+{% else %}
+    <div class="form-group {% if is_submitted %}has-feedback {% if field.errors %}has-error{% else %}has-success{% endif %}{% endif %}">
+        {% set class_ = kwargs.pop('class_', '') %}
+        {% if field.flags.required %}
+            {% set class_ = kwargs.pop('class_', 'required') %}
+        {% endif %}
+        {# {% if field.type == 'QuerySelectMultipleField' and field.widget  %} #}
+        {% if field.type == 'FieldList' %}
+        <label class="control-label col-md-2" id="{{ field.id }}"><small>{{ field.label.text }}{% if field.flags.required == true %}&nbsp;<span class="required">*</span>{% endif %}</small></label>
+        <div class="col-md-10">
+            {% for fieldlist in field.entries %}
+                {% if fieldlist.type == 'FormField' %}
+                <label class="checkbox form-inline">
+                    {% for subfield in fieldlist %}
+                        {% if subfield.type == 'BooleanField' %}
+                        {{ subfield(class_=class_, placeholder=placeholder, **kwargs)|safe }}
+                        {% elif subfield.type == 'IntegerField' %}
+                        {{ subfield(class_='input-sm input-small-width form-control', placeholder=placeholder, **kwargs)|safe }}
+                        {% elif subfield.type == 'StringField' %}
+                            <small>{{ subfield.data }}</small>
+                            {{ subfield(class_='input-sm form-control', **kwargs) }}
+                        {% else %}
+                            {{ subfield(**kwargs)|safe }}
+                        {% endif %}
+                    {% endfor %}
+                </label>
+                {% endif %}
+            {% endfor %}
+            {% if field.errors %}<div class="help-block">{% for error in field.errors %}{{ error|safe }}{% endfor %}</div>{% endif %}
+        {% elif field.type == 'BooleanField' %}
+        <div class="col-md-2"></div>
+        <div class="col-md-6">
+            <label class="checkbox">
+                {{ field(class_=class_, placeholder=placeholder, **kwargs)|safe }}
+                <small>{{ field.label.text|safe }}</small>
+            </label>
+            {% if field.errors %}<div class="help-block">{% for error in field.errors %}{{ error|safe }}{% endfor %}</div>{% endif %}
+        {% else %}
+        <label class="control-label col-md-2" for="{{ field.id }}"><small>{{ field.label.text }}{% if field.flags.required == true %}&nbsp;<span class="required">*</span>{% endif %}</small></label>
+        <div class="col-md-6">
+            {{ field(class_="input-sm form-control", placeholder=placeholder, **kwargs) }}
+            {% if field.errors %}<span class="glyphicon glyphicon-asterisk form-control-feedback"></span> <span class="text-danger">{% for error in field.errors %}{{ error|safe }}<br>{% endfor %}</span>{% else %}{% if is_submitted %}<span class="glyphicon glyphicon-ok form-control-feedback"></span>{% endif %}{% endif %}
+        {% endif %}
+        {% if field.description %}
+        <h5 class="help-block"><small>{{ field.description|nl2br }}</small></h5>
+        {% endif %}
+        </div>
+    </div>
+{% endif %}
+{% endmacro %}
+
+{% macro render_submit(field, class_="") %}
+<div class="field">
+    <div class="form-group">
+        <div class="col-md-2"></div>
+        <div class="col-md-6">
+            <button type="submit" {% if class_ %} class="{{ class_|e }}"{% endif %}><small>{{ field.label.text|e }}</small></button>
+            <span class="loading hide">&nbsp;</span>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro render_form(form, method='post', button_class='btn btn-primary', action='', name=None) %}
+<form action="{{ action }}" class="form form-horizontal" method="{{ method }}" role="form"{% if name %} name="{{name}}"{% endif %}>
+    <fieldset>
+    {% for field in form %}
+        {% if field.type == 'TextAreaField' %}
+            {{ render_field(field, is_submitted=form.is_submitted(), rows=6, **kwargs) }}
+        {% elif field.type == 'SubmitField' %}
+            {{ render_submit(field, class_=button_class, **kwargs) }}
+        {% else %}
+            {{ render_field(field, is_submitted=form.is_submitted(), csrf_enabled=form.csrf_enabled, **kwargs) }}
+        {% endif %}
+    {% endfor %}
+    {# {{ render_submit([(None, submit or "Submit", None), (None, "Test", None)], class_=button_class, **kwargs) }} #}
+    </fieldset>
+</form>
+{% endmacro %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block scripts %}
+    {% if current_user.is_admin() %}
+        {% include 'helpers/modal_dialog.html' %}
+    {% endif %}
+{% endblock %}
+{% block content %}
+{% if form %}
+    {% from "helpers/form.html" import render_form %}
+    {{ render_form(form, method='get', action=url_for('clients.index')) }}
+{% endif %}
+{% if users.items %}
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(users) }}
+{%
+     set table_header = ([
+                ('', ''),
+                ('id', _('ID')),
+                ('name', _('Название')),
+                ('email', _('Email')),
+                ('', _('Переходы')),
+                ('', _('Конверсии')),
+                ('sections', _('Разделов')),
+                ('scenarios', _('Сценариев')),
+                ('channels', _('Каналов')),
+                ('partners', _('Партнеров')),
+                ('money', _('Остаток')),
+            ])
+%}
+<table class="table table-hover table-condensed table-striped">
+    {% from "helpers/table.html" import render_table_header, render_table_row %}
+    {{ render_table_header(table_header, default_sort, default_dir) }}
+    <tbody>
+    {% for user, clicks, convs, channels, partners in users.items %}
+        <tr>
+            <td>
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    <button type="button" class="status btn {% if user.is_active() %}btn-success{% elif user.is_blocked() %}btn-warning{% else %}btn-danger{% endif %}" data-toggle="dropdown">{% if user.is_active() %}{{ _('Активен') }}{% elif user.is_blocked() %}{{ _('Заблокирован') }}{% else %}{{ _('Удален') }}{% endif %}</button>
+                    <button type="button" class="btn {% if user.is_active() %}btn-success{% elif user.is_blocked() %}btn-warning{% else %}btn-danger{% endif %} dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                      <li><a href="{{ url_for_next('clients.edit', id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-edit"></span> <small>{{ _('Профиль') }}</small></a></li>
+                      <li><a href="{{ url_for_next('clients.password.edit', id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-lock"></span> <small>{{ _('Сменить пароль') }}</small></a></li>
+                      <li class="divider"></li>
+                      <li><a href="{{ url_for('clients.sections', client_id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-th-large"></span> <small>{{ _('Разделы') }}</small></a></li>
+                      <li><a href="{{ url_for('clients.scenarios', client_id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-film"></span> <small>{{ _('Сценарии') }}</small></a></li>
+                      <li><a href="{{ url_for('clients.channels', client_id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-th"></span> <small>{{ _('Каналы') }}</small></a></li>
+                      <li class="divider"></li>
+                      <li><a href="#"><span class="text-muted glyphicon glyphicon-usd"></span> <small>{{ _('Финансы') }}</small></a></li>
+                      <li><a href=""><span class="text-muted glyphicon glyphicon-stats"></span> <small>{{ _('Статистика') }}</small></a></li>
+                      <li><a href="{{ url_for('clients.code', id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-link"></span> <small>{{ _('Универсальный код') }}</small></a></li>
+                      {% if current_user.is_admin() %}
+                      <li class="divider"></li>
+                      <li>
+                          <a href="{{ url_for('clients.activate', id=user.get_id()) }}" class="active activateModal{% if user.is_active() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите активировать клиента') }} {{ user.name }}?" data-id="{{ user.get_id() }}"><small class="text-success"><span class="glyphicon glyphicon-ok"></span> {{ _('Активировать') }}</small></a>
+                          <a href="{{ url_for('clients.block', id=user.get_id()) }}" class="blocked blockModal{% if user.is_blocked() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите заблокировать клиента') }} {{ user.name }}?" data-id="{{ user.get_id() }}"><small class="text-warning"><span class="glyphicon glyphicon-ban-circle"></span> {{ _('Заблокировать') }}</small></a>
+                          <a href="{{ url_for('clients.delete', id=user.get_id()) }}" class="deleted deleteModal{% if user.is_deleted() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите удалить клиента') }} {{ user.name }}?" data-id="{{ user.get_id() }}"><small class="text-danger"><span class="glyphicon glyphicon-remove"></span> {{ _('Удалить') }}</small></a>
+                      </li>
+                      {% endif %}
+                    </ul>
+                </div>
+            </td>
+            <td><small>{{ user.get_id() }}</small></td>
+            <td><small>{{ user.name }}</small></td>
+            <td><small>{{ user.email }}</small></td>
+            <td><small>{{ user.scenario_clicks | num }}</small></td>
+            <td><small>{{ user.scenario_convs | num }}</small></td>
+            <td><a href="{{ url_for('clients.sections', client_id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-th-large"></span></a> <a href="{{ url_for('clients.sections', client_id=user.get_id()) }}"><small>{{ user.section_count }}</small></a></td>
+            <td><a href="{{ url_for('clients.scenarios', client_id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-film"></span></a> <a href="{{ url_for('clients.scenarios', client_id=user.get_id()) }}"><small>{{ user.scenario_count }}</small></a></td>
+            <td><a href="{{ url_for('clients.channels', client_id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-th"></span></a> <a href="{{ url_for('clients.channels', client_id=user.get_id()) }}"><small>{{ channels }}</small></a></td>
+            <td><a href="{{ url_for('clients.partners', client_id=user.get_id()) }}"><small>{{ partners }}</small></a></td>
+            <td>
+                {% if user.money < 1 %}
+                <span class="label label-danger">{{ user.money | money }}</span>
+                {% elif user.money < 100 %}
+                <span class="label label-warning">{{ user.money | money }}</span>
+                {% else %}
+                <span class="label label-success">{{ user.money | money }}</span>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(users) }}
+{% else %}
+<table class="table table-hover">
+    <tbody>
+        <tr>
+            <td>По вашему запросу ничего не найдено</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+<a class="btn btn-primary btn-sm pull-right" href="{{ url_for('clients.create') }}">{{ _('Добавить клиента') }}</a>
+{% endblock %}

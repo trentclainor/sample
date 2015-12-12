@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block scripts %}
+    {% from "helpers/date.html" import daterage %}
+    {{ daterage(format='DD.MM.YYYY') }}
+    <script>
+        $(document).ready(function() {
+            var link;
+
+            BootstrapDialog.confirm = function(message, title, type, label, cssClass, icon, callback) {
+                new BootstrapDialog({
+                    title: title,
+                    message: message,
+                    type: type,
+                    closable: false,
+                    data: {
+                        'callback': callback
+                    },
+                    buttons: [{
+                            label: '{{ _('Отменить') }}',
+                            action: function(dialog) {
+                                typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(false);
+                                dialog.close();
+                            }
+                        }, {
+                            label: label,
+                            cssClass: cssClass,
+                            icon: icon,
+                            action: function(dialog) {
+                                typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(true);
+                                dialog.close();
+                            }
+                        }]
+                }).open();
+            };
+
+            var check = function() {
+                var checked = 0;
+                $('input[name=conv_ids]').each(function() {
+                    if ($(this).is(':checked')) {
+                        checked++;
+                    }
+                });
+                if (checked) {
+                    $('.reject-modal').prop('disabled', false);
+                    $('.accept-modal').prop('disabled', false);
+                }
+                else {
+                    $('.reject-modal').prop('disabled', true);
+                    $('.accept-modal').prop('disabled', true);
+                }
+            }
+
+            $('input[name=conv_ids]').change(function() {
+                check();
+            });
+
+            $('#check_all').change(function() {
+                var check_all = $(this).is(':checked');
+                $('input[name=conv_ids]').each(function() {
+                    if (check_all && !$(this).is(':disabled')) {
+                        $(this).prop('checked', true);
+                    }
+                    else {
+                        $(this).prop('checked', false);
+                    }
+                });
+                check();
+            });
+
+            $('.accept-modal').click(function(e) {
+                link = $(this);
+                BootstrapDialog.confirm(link.attr('data-confirm'), '{{ _('Подтверждение принятия') }}', BootstrapDialog.TYPE_SUCCESS, '{{ _('Принять') }}', 'btn-success', 'glyphicon glyphicon-thumbs-up', function(r) {
+                    if(r) {
+                        $('input[name=action]').val('accept');
+                        $('form[name=convs]').submit();
+                    }
+                });
+                return false;
+            });
+
+            $('.reject-modal').click(function(e) {
+                link = $(this);
+                BootstrapDialog.confirm(link.attr('data-confirm'), '{{ _('Подтверждение отклонения') }}', BootstrapDialog.TYPE_DANGER, '{{ _('Отказано') }}', 'btn-danger', 'glyphicon glyphicon-thumbs-down', function(r) {
+                    if(r) {
+                        $('input[name=action]').val('reject');
+                        $('form[name=convs]').submit();
+                    }
+                });
+                return false;
+            });
+            
+            var make_accepted = function(link) {
+                $('a', link.parent()).removeClass('hide');
+                $('a.accepted', link.parent()).addClass('hide');
+                link.parent().parent()
+                    .prev().removeClass('btn-danger').removeClass('btn-default').addClass('btn-success')
+                    .prev().removeClass('btn-danger').removeClass('btn-default').addClass('btn-success').text('{{ _('Принят') }}');
+                {% if not current_user.is_admin() %}
+                link.parent().parent().remove()
+                {% endif %}
+            }
+
+            var make_rejected = function(link) {
+                $('a', link.parent()).removeClass('hide');
+                $('a.rejected', link.parent()).addClass('hide');
+                link.parent().parent()
+                    .prev().removeClass('btn-success').removeClass('btn-default').addClass('btn-danger')
+                    .prev().removeClass('btn-success').removeClass('btn-default').addClass('btn-danger').text('{{ _('Отказано') }}');
+                {% if not current_user.is_admin() %}
+                link.parent().parent().remove()
+                {% endif %}
+            }
+
+            $('.accepted').click(function(e){
+                link = $(this);
+                $.post(link.attr('href'), {'csrf_token':  '{{ csrf_token() }}'}, function(r) {
+                    if (r.status) {
+                        make_accepted(link);
+                    }
+                });
+                return false;
+            });
+
+            $('.rejected').click(function(e){
+                link = $(this);
+                $.post(link.attr('href'), {'csrf_token':  '{{ csrf_token() }}'}, function(r) {
+                    if (r.status) {
+                        make_rejected(link);
+                    }
+                });
+                return false;
+            });
+            
+            // $('select', $('form[name=filter]')).each(function(i, e) {
+            //     var name = $(this).attr('name');
+            //     if (name != 'status') {
+            //         $(this).parent().parent().hide();
+            //     }
+            // });
+            // $('input[type=text]', $('form[name=filter]')).each(function(i, e) {
+            //     var name = $(this).attr('name');
+            //     if (name != 'daterange') {
+            //         $(this).parent().parent().hide();
+            //     }
+            // });
+            // $('button', $('form[name=filter]')).parent().parent().parent().prev().html('<div><span class="caret"></span></div>');
+        });
+    </script>
+{% endblock %}
+{% block content %}
+{% if form %}
+    {% from "helpers/form.html" import render_form %}
+    {{ render_form(form, method='get', action=url_for('convs.index'), name="filter") }}
+{% endif %}
+{% if convs.items %}
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(convs) }}
+{%
+     set table_header = ([
+                ('checkall', '<input type="checkbox" id="check_all">' | safe),
+                ('', _('Статус')),
+                ('', ''),
+                ('id', _('ID')),
+                ('', _('Параметры перехода')),
+                ('channel_name', _('Канал')),
+                ('partner_name', _('Партнер')),
+                ('client_name', _('Клиент')),
+                ('scenario_name', _('Сценарий')),
+                ('payout', _('Расход')),
+                ('income', _('Доход')),
+            ])
+%}
+<form action="" class="form form-horizontal" method="post" name="convs" role="form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="action" value="">
+<small>
+<table class="table table-hover table-condensed table-striped">
+    {% from "helpers/table.html" import render_table_header, render_table_row %}
+    {{ render_table_header(table_header, default_sort, default_dir, {'checkbox': 'checkall'}) }}
+    <tbody>
+    {% for conv in convs.items %}
+        <tr>
+            <td><input type="checkbox" name="conv_ids" value="{{ conv.id }}" {% if not current_user.is_admin() and conv.status != 'new' %}disabled{% endif %}></td>
+            <td>
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    <button type="button" class="status btn {% if conv.status == 'new' %}btn-default{% elif conv.status == 'accepted' %}btn-success{% elif conv.status == 'rejected' %}btn-danger{% endif %}" data-toggle="dropdown">{% if conv.status == 'new' %}Новый{% elif conv.status == 'accepted' %}Принят{% elif conv.status == 'rejected' %}Отказано{% endif %}</button>
+                    <button type="button" class="btn {% if conv.status == 'new' %}btn-default{% elif conv.status == 'accepted' %}btn-success{% elif conv.status == 'rejected' %}btn-danger{% endif %} dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    {% if current_user.is_admin() or conv.status == 'new' %}
+                    <ul class="dropdown-menu" role="menu">
+                      <li>
+                          <a href="{{ url_for('convs.accept', id=conv.id) }}" data-id="{{ conv.id }}" class="accepted {% if conv.status == 'accepted' %}hide{% endif %}"><small class="text-success"><span class="glyphicon glyphicon-thumbs-up"></span> {{ _('Принять') }}</small></a>
+                          <a href="{{ url_for('convs.reject', id=conv.id) }}" data-id="{{ conv.id }}" class="rejected {% if conv.status == 'rejected' %}hide{% endif %}"><small class="text-danger"><span class="glyphicon glyphicon-thumbs-down"></span> {{ _('Отказать') }}</small></a>
+                      </li>
+                    </ul>
+                    {% endif %}
+                </div>
+            </td>
+            <td>
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    {% if not conv.click_status %}
+                    <button type="button" class="btn btn-default btn-small">
+                        <span class="glyphicon">&nbsp;</span>
+                    </button>
+                    {% elif conv.click_status == 'new' %}
+                    <a class="btn btn-default btn-small"  href="{{ url_for('clicks.index', id=conv.click_id) }}">
+                        <span class="glyphicon glyphicon-envelope"></span>
+                    </a>
+                    {% elif conv.click_status == 'accepted' %}
+                    <a class="btn btn-success btn-small"  href="{{ url_for('clicks.index', id=conv.click_id) }}">
+                        <span class="glyphicon glyphicon-thumbs-up"></span>
+                    </a>
+                    {% elif conv.click_status == 'rejected' %}
+                    <a class="btn btn-danger btn-small"  href="{{ url_for('clicks.index', id=conv.click_id) }}">
+                        <span class="glyphicon glyphicon-thumbs-down"></span>
+                    </a>
+                    {% endif %}
+                </div>
+            </td>
+            <td>{{ conv.id }}</td>
+            <td>
+                <ul>
+                    <li>{{ conv.created }}</li>
+                    <li>{{ conv.ip }}</li>
+                    {% if conv.user_agent %}
+                    <li>{{ conv.user_agent }}</li>
+                    {% endif %}
+                    {% if conv.link %}
+                    <li>{{ conv.link }}</li>
+                    {% endif %}
+                </ul>
+            </td>
+            <td>{{ conv.channel_name }}</td>
+            <td>{{ conv.partner_name }}</td>
+            <td>{{ conv.client_name }}</td>
+            <td>{{ conv.scenario_name }}</td>
+            <td>{{ conv.payout | money }}</td>
+            <td>{{ conv.cost | money }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</small>
+<button class="btn btn-success btn-sm deleted accept-modal" type="submit" data-confirm="{{ _('Вы уверены, что хотите принять выбранные конверсии?') }}" disabled>{{ _('Принять выбранные конверсии') }}</button>
+<button class="btn btn-danger btn-sm deleted reject-modal" type="submit" data-confirm="{{ _('Вы уверены, что хотите отклонить выбранные конверсии?') }}" disabled>{{ _('Отклонить выбранные конверсии') }}</button>
+</form>
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(convs) }}
+{% else %}
+<table class="table table-hover">
+    <tbody>
+        <tr>
+            <td>По вашему запросу ничего не найдено</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

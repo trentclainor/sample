@@ -1,0 +1,95 @@
+    <script>
+        $(document).ready(function() {
+            var link;
+
+            var make_active = function(link) {
+                $('a', link.parent()).removeClass('hide');
+                $('a.active', link.parent()).addClass('hide');
+                link.parent().parent()
+                    .prev().removeClass('btn-danger').removeClass('btn-warning').addClass('btn-success')
+                    .prev().removeClass('btn-danger').removeClass('btn-warning').addClass('btn-success').text('{{ _('Активен') }}');
+            }
+
+            var make_blocked = function(link) {
+                $('a', link.parent()).removeClass('hide');
+                $('a.blocked', link.parent()).addClass('hide');
+                link.parent().parent()
+                    .prev().removeClass('btn-success').removeClass('btn-danger').addClass('btn-warning')
+                    .prev().removeClass('btn-success').removeClass('btn-danger').addClass('btn-warning').text('{{ _('Заблокирован') }}');
+            }
+
+            var make_deleted = function(link) {
+                $('a', link.parent()).removeClass('hide');
+                $('a.deleted', link.parent()).addClass('hide');
+                link.parent().parent()
+                    .prev().removeClass('btn-success').removeClass('btn-warning').addClass('btn-danger')
+                    .prev().removeClass('btn-success').removeClass('btn-warning').addClass('btn-danger').text('{{ _('Удален') }}');
+            }
+
+            BootstrapDialog.confirm = function(message, title, type, label, cssClass, icon, callback) {
+                new BootstrapDialog({
+                    title: title,
+                    message: message,
+                    type: type,
+                    closable: false,
+                    data: {
+                        'callback': callback
+                    },
+                    buttons: [{
+                            label: '{{ _('Отменить') }}',
+                            action: function(dialog) {
+                                typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(false);
+                                dialog.close();
+                            }
+                        }, {
+                            label: label,
+                            cssClass: cssClass,
+                            icon: icon,
+                            action: function(dialog) {
+                                typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(true);
+                                dialog.close();
+                            }
+                        }]
+                }).open();
+            };
+            $('.deleteModal').click(function(e) {
+                link = $(this);
+                BootstrapDialog.confirm(link.attr('data-confirm'), '{{ _('Подтверждение удаления') }}', BootstrapDialog.TYPE_DANGER, '{{ _('Удалить') }}', 'btn-danger', 'glyphicon glyphicon-remove', function(r) {
+                    if(r) {
+                        $.post(link.attr('href'), {'csrf_token':  '{{ csrf_token() }}'}, function(r) {
+                            if (r.status) {
+                                make_deleted(link);
+                            }
+                        });
+                    }
+                });
+                return false;
+            });
+            $('.blockModal').click(function(e) {
+                link = $(this);
+                BootstrapDialog.confirm(link.attr('data-confirm'), '{{ _('Подтверждение блокировки') }}', BootstrapDialog.TYPE_WARNING, '{{ _('Заблокировать') }}', 'btn-warning', 'glyphicon glyphicon-ban-circle', function(r) {
+                    if(r) {
+                        $.post(link.attr('href'), {'csrf_token':  '{{ csrf_token() }}'}, function(r) {
+                            if (r.status) {
+                                make_blocked(link);
+                            }
+                        });
+                    }
+                });
+                return false;
+            });
+            $('.activateModal').click(function(e) {
+                link = $(this);
+                BootstrapDialog.confirm(link.attr('data-confirm'), '{{ _('Подтверждение активации') }}', BootstrapDialog.TYPE_SUCCESS, '{{ _('Активировать') }}', 'btn-success', 'glyphicon glyphicon-ok', function(r) {
+                    if(r) {
+                        $.post(link.attr('href'), {'csrf_token':  '{{ csrf_token() }}'}, function(r) {
+                            if (r.status) {
+                                make_active(link);
+                            }
+                        });
+                    }
+                });
+                return false;
+            });
+        });
+    </script>

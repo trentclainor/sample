@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block sidebar %}
+    {% from "helpers/account_sidebar.html" import sidebar with context %}
+    {{ sidebar() }}
+{% endblock %}
+{% block content %}
+{% from "helpers/form.html" import render_form %}
+<form action="" class="form-horizontal" method="post">
+    <fieldset>
+    <div class="form-group">
+        <label class="control-label">{{ _('Текущий e-mail') }}</label>
+        <div class="controls"><h6 class="help-inline">{{ current_mail|safe }}</h6></div>
+    </div>
+    {{ render_form(form, button_class="btn btn-primary") }}
+    </fieldset>
+</form>
+{% endblock %}

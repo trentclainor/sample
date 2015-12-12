@@ -1,0 +1,31 @@
+{%- macro sidebar_link(label, endpoint) -%}
+    {% set re = request.endpoint[:request.endpoint.find('.', request.endpoint.find('.') + 1)] %}
+    <li{% if endpoint[:endpoint.find('.', endpoint.find('.') + 1)] == re or endpoint == re %} class="active"{% endif %}><a href="{{ url_for(endpoint, **kwargs) }}">{{ label }}</a></li>
+{%- endmacro -%}
+
+{% macro sidebar() %}
+{%
+    set menu = (_('Статистика'), [
+                    (_('По датам'), 'stats.days'),
+                    (_('По партнерам'), 'stats.partners'),
+                    (_('По каналам'), 'stats.channels'),
+                    (_('По сценариям'), 'stats.scenarios'),
+                ]),
+%}
+    <div class="col-md-2 sidebar">
+        <ul class="nav nav-pills nav-stacked">
+            {% for header, subitem in menu %}
+            {% if header != '' %}
+        </ul>
+        <ul class="nav nav-pills nav-stacked">
+            <li><h5>{{ header }}</h5></li>
+            {% else%}
+            <li class="divider"></li>
+            {% endif %}
+            {% for label, endpoint in subitem %}
+                {{ sidebar_link(label, endpoint) }}
+            {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endmacro %}

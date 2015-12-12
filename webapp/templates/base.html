@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sample {% block title %}{{title}}{% endblock %}</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap-dialog.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/daterangepicker-bs3.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-dialog.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/daterangepicker.js') }}"></script>
+    {% if current_user.is_authenticated() %}
+    <script>
+        $(document).ready(function() {
+            $('[rel=gravatar]').tooltip({'html': true, 'title': '<img src="{{ current_user.email|gravatar(size=100, default='identicon') }}" style="width:100px; height: 100px; margin:5px 0 5px 0">', 'placement': 'bottom'});
+        });
+    </script>
+    {% endif %}
+</head>
+<body>
+<nav class="navbar navbar-default" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collaps">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/"><span class="text-info">{{ _('Sample') }}</span></a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        {% from "helpers/nav.html" import nav with context %}
+        {{ nav({
+            '': [(_('About'), 'about.index'), (_('Feedback'), 'feedback.index')],
+            'client': [(_('Статистика'), 'stats.index'), (_('О системе'), 'about.index'), (_('Обратная связь'), 'feedback.index'), ],
+            'partner': [(_('Статистика'), 'stats.index'), (_('О системе'), 'about.index'), (_('Обратная связь'), 'feedback.index')],
+            'manager': [(_('Статистика'), 'stats.index'), (_('Клиенты'), 'clients.index'), (_('Партнеры'), 'partners.index'), (_('Переходы'), 'clicks.index'), (_('Конверсии'), 'convs.index'), (_('Настройки'), 'preferences.index')],
+            'admin': [(_('Статистика'), 'stats.index'), (_('Клиенты'), 'clients.index'), (_('Партнеры'), 'partners.index'), (_('Переходы'), 'clicks.index'), (_('Конверсии'), 'convs.index'), (_('Настройки'), 'preferences.index')],
+            }, current_user.get_role()
+        ) }}
+        {% if current_user.is_authenticated() %}
+        {# <a href="{{ url_for('account.signout') }}" class="pull-right btn btn-link btn-sm navbar-btn glyphicon glyphicon-off"> {{ _('Sign out') }}</a> #}
+        <div class="btn-group pull-right">
+          <button class="btn btn-link btn-sm navbar-btn dropdown-toggle" type="button" data-toggle="dropdown">
+              {{ _('Профиль') }}
+          </button>
+          <a href="{{ url_for('account.signout') }}" class="btn btn-link btn-sm navbar-btn"> {{ _('Sign out') }}</a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="{{ url_for('account.settings') }}"><span class="text-muted glyphicon glyphicon-edit"></span> <small>{{ _('Редактировать')}}</small></a></li>
+            <li class="divider"></li>
+            <li><a href="{{ url_for('account.settings.password') }}"><span class="text-muted glyphicon glyphicon-lock"></span> <small>{{ _('Изменить пароль') }}</small></a></li>
+            <li><a href="{{ url_for('account.settings.emailchange') }}"><span class="text-muted glyphicon glyphicon-envelope"></span> <small>{{ _('Изменить email') }}</small></a></li>
+          </ul>
+        </div>
+        <small class="pull-right navbar-text">{{ _('Здравствуйте,') }} <a href="{{ url_for('account.settings') }}"><strong class="text-primary">{{ current_user.name }}</strong></a>, {{ _('на счету') }} <strong class="text-danger">{{ current_user.money | money }}</strong></small>
+        {% else %}
+        <a href="{{ url_for('account.signin') }}" class="pull-right btn btn-link btn-sm navbar-btn">{{ _('Sign in') }}</a>
+        {% endif %}
+    </div>
+  </div>
+</nav>
+<div class="container" role="main">
+    {% block breadcrumb %}
+    {% if breadcrumbs %}
+        <ol class="breadcrumb">
+            {% for name, bp, params in breadcrumbs %}
+                {% if bp %}
+                    <li><a href="{{ url_for(bp, **params) }}"><small>{{ name }}</small></a></li>
+                {% elif name %}
+                    <li><small>{{ name }}</small></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    {% endif %}
+    {% endblock %}
+    <div class="row">
+        {% block sidebar %}
+            {% if sidebar_path %}
+                {% from sidebar_path import sidebar with context %}
+                {{ sidebar() }}
+            {% endif %}
+        {% endblock %}
+        <div class="col-md-10">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{% if category in ['success', 'danger'] %}{{category}}{% else %}info{% endif %}">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message|safe }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% block header %}
+            <h2 class="header"><small>{{ header }} {% block header_extend %}{% if header_extend %}&laquo;{{header_extend}}&raquo;{% endif %}{% endblock %}</small></h2>
+            <hr>
+        {% endblock %}
+        {% block content %}
+        {% if form %}
+            {% from "helpers/form.html" import render_form %}
+            {{ render_form(form, button_class="btn btn-primary") }}
+        {% endif %}
+        {{ content|safe }}
+        {% endblock %}
+        </div>
+    </div>
+</div>
+<footer>
+    <hr>
+    <div class="container">
+        <div class="counter"></div>
+        <div class="pull-left"><small>{{ _('Copyright &copy;') }} {{ copyright_year }} {{ _('Sample') }}</small></div>
+        <div class="pull-right"><small><a href="{{ url_for('terms.index') }}">{{ _('Terms') }}</a></small></div>
+    </div>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

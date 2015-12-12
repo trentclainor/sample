@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block scripts %}
+    {% if current_user.is_admin() %}
+        {% include 'helpers/modal_dialog_confirm_delete.html' %}
+    {% endif %}
+{% endblock %}
+{% block content %}
+{% if form %}
+    {% from "helpers/form.html" import render_form %}
+    {{ render_form(form, method='get', action=url_for('preferences.parameters')) }}
+{% endif %}
+{% if parameters.items %}
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(parameters) }}
+<table class="table table-hover table-condensed table-striped table-nonfluid">
+    <thead>
+        <tr>
+            <th></th>
+            <th><small>ID</small></th>
+            <th><small>Название</small></th>
+            <th><small>Ключ</small></th>
+            <th><small>Значение</small></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for parameter in parameters.items %}
+        <tr>
+            <td>
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    <button class="btn btn-default" type="button" data-toggle="dropdown">{{ _('Управление') }}</button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="{{ url_for_next('preferences.parameters.edit', id=parameter.get_id()) }}"><small class="text-muted"><span class="glyphicon glyphicon-edit"></span> {{ _('Редактировать') }}</small></a></li>
+                        {% if current_user.is_admin() %}
+                        <li><a href="{{ url_for_next('preferences.parameters.delete', id=parameter.get_id()) }}" class="deleteModal" data-confirm="{{ _('Вы уверены что хотите удалить параметр') }} {{ parameter.name }}?"><small class="text-danger"><span class="glyphicon glyphicon-remove"></span> {{ _('Удалить') }}</small></a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </td>
+            <td><small>{{ parameter.get_id() }}</small></td>
+            <td><small>{{ parameter.name }}</small></td>
+            <td><small>{{ parameter.key }}</small></td>
+            <td><small>{{ parameter.value }}</small></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(parameters) }}
+{% else %}
+<table class="table table-hover">
+    <tbody>
+        <tr>
+            <td>По вашему запросу ничего не найдено</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+<a class="btn btn-primary btn-sm pull-right" href="{{ url_for('preferences.parameters.create') }}">{{ _('Добавить параметр') }}</a>
+{% endblock %}

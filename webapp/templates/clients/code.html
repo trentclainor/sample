@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('form').change(function() {
+            $(this).submit();
+        });
+        $('form').submit(function() {
+            $('#code').remove();
+            return true;
+        });
+    });
+</script>
+{% endblock %}
+{% block content %}
+{% if form %}
+    {% from "helpers/form.html" import render_form %}
+    {{ render_form(form, method='get', action=url_for('clients.code', id=client.get_id())) }}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{%- macro nav_link(label, endpoint) -%}
+    <li {% if endpoint[:endpoint.index('.')] == request.endpoint[:request.endpoint.index('.')] %}class="active"{% endif %}><a href="{{ url_for(endpoint, **kwargs) }}">{{ label }}</a></li>
+{%- endmacro -%}
+
+{% macro nav(menu, current_role = 'anonymous') %}
+    <ul class="nav navbar-nav">
+    {% for label, endpoint in menu[current_role] %}
+        {{ nav_link(label, endpoint) }}
+    {% endfor %}
+    </ul>
+{% endmacro %}

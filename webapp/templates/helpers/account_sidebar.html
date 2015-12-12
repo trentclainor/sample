@@ -1,0 +1,41 @@
+{%- macro sidebar_link(label, endpoint) -%}
+    <li{% if endpoint == request.endpoint %} class="active"{% endif %}><a href="{{ url_for(endpoint, **kwargs) }}">{{ label }}</a></li>
+{%- endmacro -%}
+
+{% macro sidebar() %}
+{% if current_user.is_authenticated() %}
+{%
+    set menu = (_('Профиль'), [
+                    (_('Редактировать'), 'account.settings'),
+                ]),
+                ('', [],),
+                ('Безопасность', [
+                    (_('Изменить пароль'), 'account.settings.password'),
+                    (_('Изменить e-mail'), 'account.settings.emailchange'),
+                ])
+%}
+{% else %}
+{%
+    set menu = (_(''), [
+                    (_('Вход'), 'account.signin'),
+                    (_('Забыли пароль?'), 'account.forgot'),
+                ]),
+%}
+{% endif %}
+    <div class="col-md-2 sidebar">
+        <ul class="nav nav-pills nav-stacked">
+            {% for header, subitem in menu %}
+            {% if header != '' %}
+        </ul>
+        <ul class="nav nav-pills nav-stacked">
+            <li><h5>{{ header }}</h5></li>
+            {% else%}
+            <li class="divider"></li>
+            {% endif %}
+            {% for label, endpoint in subitem %}
+                {{ sidebar_link(label, endpoint) }}
+            {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endmacro %}

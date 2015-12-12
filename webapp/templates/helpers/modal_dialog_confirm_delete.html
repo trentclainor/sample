@@ -1,0 +1,45 @@
+    <script>
+        $(document).ready(function() {
+            var link;
+
+            BootstrapDialog.confirm = function(message, type, label, cssClass, icon, callback) {
+                new BootstrapDialog({
+                    title: '{{ _('Подтверждение удаления') }}',
+                    message: message,
+                    type: type,
+                    closable: false,
+                    data: {
+                        'callback': callback
+                    },
+                    buttons: [{
+                            label: '{{ _('Отменить') }}',
+                            action: function(dialog) {
+                                typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(false);
+                                dialog.close();
+                            }
+                        }, {
+                            label: label,
+                            cssClass: cssClass,
+                            icon: icon,
+                            action: function(dialog) {
+                                typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(true);
+                                dialog.close();
+                            }
+                        }]
+                }).open();
+            };
+            $('.deleteModal').click(function(e) {
+                link = $(this);
+                BootstrapDialog.confirm(link.attr('data-confirm'), BootstrapDialog.TYPE_DANGER, '{{ _('Удалить') }}', 'btn-danger', 'glyphicon glyphicon-remove', function(r) {
+                    if(r) {
+                        $.post(link.attr('href'), {'csrf_token':  '{{ csrf_token() }}'}, function(r) {
+                            if (r.status) {
+                                link.parent().parent().parent().parent().parent().remove();
+                            }
+                        });
+                    }
+                });
+                return false;
+            });
+        });
+    </script>

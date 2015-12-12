@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block scripts %}
+    {% if current_user.is_admin() %}
+        {% include 'helpers/modal_dialog.html' %}
+    {% endif %}
+{% endblock %}
+{% block content %}
+{% if form %}
+    {% from "helpers/form.html" import render_form %}
+    {{ render_form(form, method='get', action=url_for('clients.sections', client_id=client_id)) }}
+{% endif %}
+{% if sections.items %}
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(sections) }}
+{%
+     set table_header = ([
+                ('', ''),
+                ('id', _('ID')),
+                ('name', _('Название')),
+                ('client', _('Клиент')),
+                ('order', _('Порядок')),
+                ('alias', _('Алиас')),
+                ('section_type', _('Тип')),
+                ('wildcard', _('Шаблон')),
+                ('hits', _('Показы')),
+            ])
+%}
+<table class="table table-hover table-condensed table-striped">
+    {% from "helpers/table.html" import render_table_header, render_table_row %}
+    {{ render_table_header(table_header, default_sort, default_dir) }}
+    <tbody>
+    {% for section in sections.items %}
+        <tr>
+            <td>
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    <button type="button" class="status btn {% if section.is_active() %}btn-success{% elif section.is_blocked() %}btn-warning{% else %}btn-danger{% endif %}" data-toggle="dropdown">{% if section.is_active() %}{{ _('Активен') }}{% elif section.status == 'blocked' %}{{ _('Заблокирован') }}{% else %}{{ _('Удален') }}{% endif %}</button>
+                    <button type="button" class="btn {% if section.is_active() %}btn-success{% elif section.is_blocked() %}btn-warning{% else %}btn-danger{% endif %} dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                      <li><a href="{{ url_for_next('clients.sections.edit', id=section.get_id()) }}"><span class="text-muted glyphicon glyphicon-edit"></span> <small>{{ _('Редактировать') }}</small></a></li>
+                      <li><a href="{{ url_for_next('clients.sections.up', id=section.get_id()) }}"><span class="text-muted glyphicon glyphicon-arrow-up"></span> <small>{{ _('Вверх') }}</small></a></li>
+                      <li><a href="{{ url_for_next('clients.sections.down', id=section.get_id()) }}"><span class="text-muted glyphicon glyphicon-arrow-down"></span> <small>{{ _('Вниз') }}</small></a></li>
+                      <li class="divider"></li>
+                      <li><a href="{{ url_for_next('clients.sections.code', id=section.get_id()) }}"><span class="text-muted glyphicon glyphicon-link"></span> <small>{{ _('Получить код раздела') }}</small></a></li>
+                      <li class="divider"></li>
+                      <li><a href=""><span class="text-muted glyphicon glyphicon-stats"></span> <small>{{ _('Статистика') }}</small></a></li>
+                      {% if current_user.is_admin() %}
+                      <li class="divider"></li>
+                      <li>
+                          <a href="{{ url_for('clients.sections.activate', id=section.get_id()) }}" class="active activateModal{% if section.is_active() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите активировать раздел') }} {{ section.name }}?" data-id="{{ section.get_id() }}"><small class="text-success"><span class="glyphicon glyphicon-ok"></span> {{ _('Активировать') }}</small></a>
+                          <a href="{{ url_for('clients.sections.delete', id=section.get_id()) }}" class="deleted deleteModal{% if section.is_deleted() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите удалить раздел') }} {{ section.name }}?" data-id="{{ section.get_id() }}"><small class="text-danger"><span class="glyphicon glyphicon-remove"></span> {{ _('Удалить') }}</small></a>
+                      </li>
+                      {% endif %}
+                    </ul>
+            </td>
+            <td><small>{{ section.get_id() }}</small></td>
+            <td><small>{{ section.name }}</small></td>
+            <td><small>{{ section.client }}</small></td>
+            <td><small>{{ section.order }}</small></td>
+            <td><small>{{ section.alias }}</small></td>
+            <td><small>{{ section.section_type }}</small></td>
+            <td><small>{{ section.wildcard }}</small></td>
+            <td><small>{{ section.hits }}</small></td>
+            {# {{ render_table_row(table_header, section) }} #}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(sections) }}
+{% else %}
+<table class="table table-hover">
+    <tbody>
+        <tr>
+            <td>По вашему запросу ничего не найдено</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% if current_user.is_manager() or current_user.is_admin() %}
+<a class="btn btn-primary btn-sm pull-right" href="{{ url_for_next('clients.sections.create', client_id=client_id) }}">{{ _('Добавить раздел') }}</a>
+{% endif %}
+{% endblock %}

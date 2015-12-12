@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        var label = $('label#section_list').next();
+
+        var toogle_total = function() {
+            var total_count = $('input#total_count');
+            var count_unique = $('input#count_unique');
+            var total = total_count.val();
+            var checked = 0;
+            var text_sum = 0;
+            $('input[type=checkbox]', label).each(function(i, e) {
+                checkbox = $(this);
+                text = $(this).next();
+                checkbox.change(function() {
+                    toogle_total();
+                });
+                if (total > 0) {
+                    text.attr('disabled', 1);
+                }
+                else if (count_unique.not(':checked')) {
+                    text.removeAttr('disabled');
+                }
+                if (checkbox.is(':checked')) {
+                    checked++;
+                }
+                if (checkbox.is(':checked') && text.val() > 0) {
+                    text_sum += parseInt(text.val());
+                }
+            });
+            if (checked <= total && count_unique.is(':checked')) {
+                total_count.val(checked);
+            }
+            if (total == 0) {
+                count_unique.removeAttr('checked');
+                count_unique.attr('disabled', 1);
+            }
+            else {
+                count_unique.removeAttr('disabled');
+            }
+        }
+        $('input#count_unique').change(function() {
+            toogle_total();
+        });
+        $('input#total_count').keyup(function() {
+            toogle_total();
+        })
+        toogle_total();
+    });
+</script>
+{% endblock %}
+{% block content %}
+    {{ super() }}
+{% endblock %}

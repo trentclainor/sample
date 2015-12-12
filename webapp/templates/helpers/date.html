@@ -1,0 +1,46 @@
+{% macro daterage(daterange='#daterange', date_from='#date_from', date_to='#date_to', format='DD.MM.YYYY', min_date='01/01/2014') %}
+
+    <script>
+        $(document).ready(function() {
+            $("form").submit(function() {
+                // $('{{ daterange }}').val('');
+                $('{{ daterange }}').remove();
+                return true;
+            });
+            $('{{ daterange }}').daterangepicker({
+                startDate: moment().subtract('days', 29),
+                endDate: moment(),
+                minDate: '{{min_date}}',
+                maxDate: moment(),
+                showDropdowns: true,
+                ranges: {
+                    '{{ _('Сегодня') }}': [moment(), moment()],
+                    '{{ _('Последние 30 дней') }}': [moment().subtract('days', 29), moment()],
+                    '{{ _('Текущий месяц') }}': [moment().startOf('month'), moment().endOf('month')],
+                    '{{ _('Предыдущий месяц') }}': [moment().subtract('month', 1).startOf('month'), moment().subtract('month', 1).endOf('month')]
+                },
+                opens: 'right',
+                buttonClasses: ['btn btn-sm btn-default'],
+                applyClass: 'btn-success',
+                cancelClass: 'btn-sm',
+                format: '{{ format }}',
+                separator: ' {{ _('по') }} ',
+                locale: {
+                    cancelLabel: '{{ _('Отмена') }}',
+                    applyLabel: '{{ _('Готово') }}',
+                    fromLabel: '{{ _('c') }}',
+                    toLabel: '{{ _('по') }}',
+                    customRangeLabel: '{{ _('Другой период') }}',
+                    daysOfWeek: ['{{ _('Вс') }}', '{{ _('Пн') }}', '{{ _('Вт') }}', '{{ _('Ср') }}', '{{ _('Чт') }}', '{{ _('Пт') }}','{{ _('Сб') }}'],
+                    monthNames: ['{{ _('Январь') }}', '{{ _('Февраль') }}', '{{ _('Март') }}', '{{ _('Апрель') }}', '{{ _('Май') }}', '{{ _('Июнь') }}', '{{ _('Июль') }}', '{{ _('Август') }}', '{{ _('Сентябрь') }}', '{{ _('Октябрь') }}', '{{ _('Ноябрь') }}', '{{ _('Декабрь') }}'],
+                    firstDay: 1
+                }
+            },
+            function(start, end) {
+                $('{{ date_from }}').val(start.format('{{ format }}'));
+                $('{{ date_to }}').val(end.format('{{ format }}'));
+            });
+            $('{{ daterange }}').val($('{{ date_from }}').val() + ' {{ _('по') }} ' + $('{{ date_to }}').val());
+        });
+    </script>
+{% endmacro %}

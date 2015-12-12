@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block scripts %}
+    {% if current_user.is_admin() %}
+        {% include 'helpers/modal_dialog.html' %}
+    {% endif %}
+{% endblock %}
+{% block content %}
+{% if form %}
+    {% from "helpers/form.html" import render_form %}
+    {{ render_form(form, method='get', action=url_for('partners.channels', partner_id=partner_id)) }}
+{% endif %}
+{% if channels.items %}
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(channels) }}
+{%
+     set table_header = ([
+                ('', ''),
+                ('', ''),
+                ('id', _('ID')),
+                ('name', _('Название')),
+                ('partner', _('Партнер')),
+                ('channel_type', _('Модель выкупа')),
+                ('url', _('Ссылка')),
+                ('payout', _('Расходы')),
+                ('cost', _('Доходы')),
+            ])
+%}
+<table class="table table-hover table-condensed table-striped">
+    {% from "helpers/table.html" import render_table_header, render_table_row %}
+    {{ render_table_header(table_header, default_sort, default_dir) }}
+    <tbody>
+    {% for channel in channels.items %}
+        <tr>
+            <td>
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    <button type="button" class="status btn {% if channel.is_active() %}btn-success{% elif channel.is_blocked() %}btn-warning{% else %}btn-danger{% endif %}" data-toggle="dropdown">{% if channel.is_active() %}{{ _('Активен') }}{% elif channel.status == 'blocked' %}{{ _('Заблокирован') }}{% else %}{{ _('Удален') }}{% endif %}</button>
+                    <button type="button" class="btn {% if channel.is_active() %}btn-success{% elif channel.is_blocked() %}btn-warning{% else %}btn-danger{% endif %} dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                      <li><a href="{{ url_for_next('partners.channels.edit', id=channel.get_id()) }}"><span class="text-muted glyphicon glyphicon-edit"></span> <small>{{ _('Редактировать') }}</small></a></li>
+                      <li class="divider"></li>
+                      <li><a href="{{ url_for('partners.channel.stats', partner_id=channel.partner_id, channel_id=channel.get_id()) }}"><span class="text-muted glyphicon glyphicon-stats"></span> <small>{{ _('Статистика') }}</small></a></li>
+                      {% if current_user.is_admin() %}
+                      <li class="divider"></li>
+                      <li>
+                          <a href="{{ url_for('partners.channels.activate', id=channel.get_id()) }}" class="active activateModal{% if channel.is_active() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите активировать канал') }} {{ channel.name }}?" data-id="{{ channel.get_id() }}"><small class="text-success"><span class="glyphicon glyphicon-ok"></span> {{ _('Активировать') }}</small></a>
+                          <a href="{{ url_for('partners.channels.block', id=channel.get_id()) }}" class="blocked blockModal{% if channel.is_blocked() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите заблокировать канал') }} {{ channel.name }}?" data-id="{{ channel.get_id() }}"><small class="text-warning"><span class="glyphicon glyphicon-ban-circle"></span> {{ _('Заблокировать') }}</small></a>
+                          <a href="{{ url_for('partners.channels.delete', id=channel.get_id()) }}" class="deleted deleteModal{% if channel.is_deleted() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите удалить канал') }} {{ channel.name }}?" data-id="{{ channel.get_id() }}"><small class="text-danger"><span class="glyphicon glyphicon-remove"></span> {{ _('Удалить') }}</small></a>
+                      </li>
+                      {% endif %}
+                    </ul>
+                </div>
+            </td>
+            <td>
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    <a href="{{ url_for('partners.scenarios', partner_id=channel.partner_id, channel=channel.get_id()) }}" type="button" class="btn btn-default">{{ _('Получить ссылку перехода') }}</a>
+                </div>
+            </td>
+            <td><small>{{ channel.get_id() }}</small></td>
+            <td><small>{{ channel.name }}</small></td>
+            <td><small>{{ channel.partner }}</small></td>
+            <td><small>{{ channel.get_channel_type() }}</small></td>
+            <td><small>{{ channel.url }}</small></td>
+            <td><small>0/0</small></td>
+            <td><small>0/0</small></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(channels) }}
+{% else %}
+<table class="table table-hover">
+    <tbody>
+        <tr>
+            <td>По вашему запросу ничего не найдено</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% if current_user.is_manager() or current_user.is_admin() %}
+<a class="btn btn-primary btn-sm pull-right" href="{{ url_for_next('partners.channels.create', partner_id=partner_id) }}">{{ _('Добавить канал') }}</a>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block scripts %}
+    <script>
+        $(document).ready(function() {
+            var link;
+
+            BootstrapDialog.confirm = function(message, title, type, label, cssClass, icon, callback) {
+                new BootstrapDialog({
+                    title: title,
+                    message: message,
+                    type: type,
+                    closable: false,
+                    data: {
+                        'callback': callback
+                    },
+                    buttons: [{
+                            label: '{{ _('Отменить') }}',
+                            action: function(dialog) {
+                                typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(false);
+                                dialog.close();
+                            }
+                        }, {
+                            label: label,
+                            cssClass: cssClass,
+                            icon: icon,
+                            action: function(dialog) {
+                                typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(true);
+                                dialog.close();
+                            }
+                        }]
+                }).open();
+            };
+            var check = function() {
+                var checked = 0;
+                $('input[name=channel_ids]').each(function() {
+                    if ($(this).is(':checked')) {
+                        checked++;
+                    }
+                });
+                if (checked) {
+                    $('.delete-modal').prop('disabled', false);
+                }
+                else {
+                    $('.delete-modal').prop('disabled', true);
+                }
+            }
+
+            $('input[name=channel_ids]').change(function() {
+                check();
+            });
+
+            $('#check_all').change(function() {
+                var check_all = $(this).is(':checked');
+                $('input[name=channel_ids]').each(function() {
+                    if (check_all && !$(this).is(':disabled')) {
+                        $(this).prop('checked', true);
+                    }
+                    else {
+                        $(this).prop('checked', false);
+                    }
+                });
+                check();
+            });
+            
+            $('.delete-modal').click(function(e) {
+                link = $(this);
+                BootstrapDialog.confirm(link.attr('data-confirm'), '{{ _('Подтверждение удаления') }}', BootstrapDialog.TYPE_DANGER, '{{ _('Удалить') }}', 'btn-danger', 'glyphicon glyphicon-remove', function(r) {
+                    if(r) {
+                        $('form[name=channels]').submit();
+                    }
+                });
+                return false;
+            });
+
+        });
+    </script>
+{% endblock %}
+{% block content %}
+{% if form %}
+    {% from "helpers/form.html" import render_form %}
+    {{ render_form(form, method='get', action=url_for('clients.channels', client_id=client_id, scenario_id=scenario_id)) }}
+{% endif %}
+{% if channels %}
+{%
+     set table_header = ([
+                ('checkall', '<input type="checkbox" id="check_all">' | safe),
+                ('', ''),
+                ('id', _('ID')),
+                ('name', _('Название')),
+                ('channel_type', _('Тип')),
+                ('clicks', _('Переходы')),
+                ('convs', _('Конверсии')),
+            ])
+%}
+<form action="" class="form form-horizontal" method="post" name="channels" role="form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<table class="table table-hover table-condensed table-striped">
+    {% from "helpers/table.html" import render_table_header, render_table_row %}
+    {{ render_table_header(table_header, default_sort, default_dir, {'checkbox': 'checkall'}) }}
+    <tbody>
+    {% for channel, link in channels %}
+        <tr>
+            <td><input type="checkbox" name="channel_ids" value="{{ channel.get_id() }}"{% if link.url %}disabled{% endif%}></td>
+            <td>
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    <button type="button" class="status btn {% if channel.is_active() %}btn-success{% elif channel.is_blocked() %}btn-warning{% else %}btn-danger{% endif %}" data-toggle="dropdown">{% if channel.is_active() %}{{ _('Активен') }}{% elif channel.status == 'blocked' %}{{ _('Заблокирован') }}{% else %}{{ _('Удален') }}{% endif %}</button>
+                    <button type="button" class="btn {% if channel.is_active() %}btn-success{% elif channel.is_blocked() %}btn-warning{% else %}btn-danger{% endif %} dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                      <li><a href="{{ url_for_next('clients.links.edit', client_id=client_id, alias=link.alias, scenario=scenario) }}"><span class="text-muted glyphicon glyphicon-edit"></span> <small>{{ _('Редактировать адрес перехода') }}</small></a></li>
+                      {% if link.url %}
+                      <li><a href="{{ url_for_next('clients.links.url', client_id=client_id, alias=link.alias, scenario=scenario) }}"><span class="text-muted glyphicon glyphicon-edit"></span> <small>{{ _('Получить ссылку перехода') }}</small></a></li>
+                      {% endif%}
+                      <li class="divider"></li>
+                      <li><a href=""><span class="text-muted glyphicon glyphicon-stats"></span> <small>{{ _('Статистика') }}</small></a></li>
+                      {% if current_user.is_admin() %}
+                      {# <li class="divider"></li> #}
+                      {# <li> #}
+                      {#     <a href="{{ url_for('clients.channels.activate', id=channel.get_id()) }}" class="active activateModal{% if channel.is_active() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите активировать раздел') }} {{ channel.name }}?" data-id="{{ channel.get_id() }}"><small class="text-success"><span class="glyphicon glyphicon-ok"></span> {{ _('Активировать') }}</small></a> #}
+                          {# <a href="{{ url_for('clients.scenarios.block', id=scenario.get_id()) }}" class="blocked blockModal{% if scenario.is_blocked() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите заблокировать сценарий') }} {{ scenario.name }}?" data-id="{{ scenario.get_id() }}"><small class="text-warning"><span class="glyphicon glyphicon-ban-circle"></span> {{ _('Заблокировать') }}</small></a> #}
+                      {#     <a href="{{ url_for('clients.channels.delete', id=channel.get_id()) }}" class="deleted deleteModal{% if channel.is_deleted() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите удалить раздел') }} {{ channel.name }}?" data-id="{{ channel.get_id() }}"><small class="text-danger"><span class="glyphicon glyphicon-remove"></span> {{ _('Удалить') }}</small></a> #}
+                      {# </li> #}
+                      {% endif %}
+                    </ul>
+                </div>
+            </td>
+            <td><small>{{ channel.get_id() }}</small></td>
+            <td><small>{{ channel.partner }} {# <span class="text-muted glyphicon glyphicon-th"></span> #}: {{ channel.name }}</small></td>
+            <td><small>{{ channel.get_channel_type() }}</small></td>
+            <td><small>{{ channel.clicks | num }}/{{ clicks_today | num }}</small></td>
+            <td><small>{{ channel.convs | num }}</small></td>
+            {# {{ render_table_row(table_header, channel) }} #}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<button class="btn btn-danger btn-sm deleted delete-modal" type="submit" data-confirm="{{ _('Вы уверены, что хотите удалить выбранные каналы?') }}" disabled>{{ _('Удалить выбранные каналы') }}</button>
+</form>
+{% else %}
+<table class="table table-hover">
+    <tbody>
+        <tr>
+            <td>По вашему запросу ничего не найдено</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% if current_user.is_manager() or current_user.is_admin() %}
+<a class="btn btn-primary btn-sm pull-right" href="{{ url_for_next('clients.channels.create', client_id=client_id, scenario=scenario) }}">{{ _('Добавить каналы') }}</a>
+{% endif %}
+{% endblock %}

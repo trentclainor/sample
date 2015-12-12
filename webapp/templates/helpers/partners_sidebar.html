@@ -1,0 +1,28 @@
+{%- macro sidebar_link(label, endpoint, kwargs) -%}
+    {% set re = request.endpoint[:request.endpoint.find('.', request.endpoint.find('.') + 1)] %}
+    <li{% if endpoint[:endpoint.find('.', endpoint.find('.') + 1)] == re or endpoint == re %} class="active"{% endif %}><a href="{{ url_for(endpoint, **kwargs) }}">{{ label }}</a></li>
+{%- endmacro -%}
+
+{% macro sidebar() %}
+{%
+    set menu = ('', [
+                    (_('Каналы'), 'partners.channels', {'partner_id': partner_id}),
+                ]),
+%}
+    <div class="col-md-2 sidebar">
+        <ul class="nav nav-pills nav-stacked">
+            {% for header, subitem in menu %}
+            {% if header != '' %}
+        </ul>
+        <ul class="nav nav-pills nav-stacked">
+            <li><h5>{{ header }}</h5></li>
+            {% else%}
+            <li class="divider"></li>
+            {% endif %}
+            {% for label, endpoint, kwargs in subitem %}
+                {{ sidebar_link(label, endpoint, kwargs) }}
+            {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endmacro %}

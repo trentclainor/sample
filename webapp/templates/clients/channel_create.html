@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block scripts %}
+{% endblock %}
+{% block content %}
+    {% if filter_form %}
+        {% from "helpers/form.html" import render_form %}
+        {{ render_form(filter_form, method='get', action=url_for('clients.channels.create', client_id=client_id, scenario=scenario.get_id())) }}
+    {% endif %}
+    {{ super() }}
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block scripts %}
+    {% if current_user.is_admin() %}
+        {% include 'helpers/modal_dialog.html' %}
+    {% endif %}
+{% endblock %}
+{% block content %}
+{% if form %}
+    {% from "helpers/form.html" import render_form %}
+    {{ render_form(form, method='get', action=url_for('partners.scenarios', partner_id=partner_id, channel=channel)) }}
+{% endif %}
+{% if scenarios %}
+{%
+     set table_header = ([
+                ('', ''),
+                ('id', _('ID')),
+                ('name', _('Название')),
+            ])
+%}
+<table class="table table-hover table-condensed table-striped table-nonfluid">
+    {% from "helpers/table.html" import render_table_header, render_table_row %}
+    {{ render_table_header(table_header, default_sort, default_dir) }}
+    <tbody>
+    {% for scenario, link in scenarios %}
+        <tr>
+            <td><a href="{{ url_for_next('partners.links.url', partner_id=partner_id, alias=link.alias, channel=channel) }}"><small>{{ _('Получить ссылку перехода') }}</small></a></td>
+            <td><small>{{ scenario.get_id() }}</small></td>
+            <td><small>{{ scenario.name }}</small></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<table class="table table-hover">
+    <tbody>
+        <tr>
+            <td>По вашему запросу ничего не найдено</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

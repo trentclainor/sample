@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block scripts %}
+    {% if current_user.is_admin() %}
+        {% include 'helpers/modal_dialog.html' %}
+    {% endif %}
+{% endblock %}
+{% block content %}
+    {% if form %}
+        {% from "helpers/form.html" import render_form %}
+        {{ render_form(form, method='get', action=url_for('preferences.managers')) }}
+    {% endif %}
+{% if users.items  %}
+{% if current_user.is_admin() %}
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(users) }}
+{%
+     set table_header = ([
+                ('', ''),
+                ('id', _('ID')),
+                ('name', _('Название')),
+                ('email', _('Email')),
+                ('contact_name', _('Имя')),
+                ('phone', _('Телефон')),
+                ('company_name', _('Компания')),
+                ('role', _('Администратор')),
+            ])
+%}
+<table class="table table-hover table-condensed table-striped table-nonfluid">
+    {% from "helpers/table.html" import render_table_header, render_table_row %}
+    {{ render_table_header(table_header, default_sort, default_dir) }}
+    <tbody>
+    {% for user in users.items %}
+        <tr>
+            <td>
+                <div class="btn-group btn-group-xs row-xs-flex">
+                    <button type="button" class="status btn {% if user.is_active() %}btn-success{% elif user.is_blocked() %}btn-warning{% else %}btn-danger{% endif %}" data-toggle="dropdown">{% if user.is_active() %}{{ _('Активен') }}{% elif user.is_blocked() %}{{ _('Заблокирован') }}{% else %}{{ _('Удален') }}{% endif %}</button>
+                    <button type="button" class="btn {% if user.is_active() %}btn-success{% elif user.is_blocked() %}btn-warning{% else %}btn-danger{% endif %} dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="{{ url_for_next('preferences.managers.edit', id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-edit"></span> <small>{{ _('Профиль') }}</small></a></li>
+                        <li><a href="{{ url_for_next('preferences.managers.password.edit', id=user.get_id()) }}"><span class="text-muted glyphicon glyphicon-lock"></span> <small>{{ _('Сменить пароль') }}</small></a></li>
+                        <li class="divider"></li>
+                        {% if current_user.is_admin() %}
+                        <li>
+                          <a href="{{ url_for('preferences.managers.activate', id=user.get_id()) }}" class="active activateModal{% if user.is_active() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите активировать администратора') }} {{ user.name }}?" data-id="{{ user.get_id() }}"><small class="text-success"><span class="glyphicon glyphicon-ok"></span> {{ _('Активировать') }}</small></a>
+                          <a href="{{ url_for('preferences.managers.block', id=user.get_id()) }}" class="blocked blockModal{% if user.is_blocked() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите заблокировать администратора') }} {{ user.name }}?" data-id="{{ user.get_id() }}"><small class="text-warning"><span class="glyphicon glyphicon-ban-circle"></span> {{ _('Заблокировать') }}</small></a>
+                          <a href="{{ url_for('preferences.managers.delete', id=user.get_id()) }}" class="deleted deleteModal{% if user.is_deleted() %} hide{% endif %}" data-confirm="{{ _('Вы уверены что хотите удалить администратора') }} {{ user.name }}?" data-id="{{ user.get_id() }}"><small class="text-danger"><span class="glyphicon glyphicon-remove"></span> {{ _('Удалить') }}</small></a>
+                        </li>
+                      {% endif %}
+                    </ul>
+                </div>
+            </td>
+            <td><small>{{ user.get_id() }}</small></td>
+            <td><small>{{ user.name }}</small></td>
+            <td><small>{{ user.email }}</small></td>
+            <td><small>{{ user.contact_name }}</small></td>
+            <td><small>{{ user.company }}</small></td>
+            <td><small>{{ user.phone }}</small></td>
+            <td>
+                {% if user.is_admin() %}
+                <small class="text-success"><span class="glyphicon glyphicon-ok-circle"></span>
+                {% else %}
+                <small class="text-danger"><span class="glyphicon glyphicon-remove-circle"></span>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% from "helpers/pagination.html" import render_pagination %}
+{{ render_pagination(users) }}
+{% else %}
+<table class="table table-hover">
+    <tbody>
+        <tr>
+            <td>По вашему запросу ничего не найдено</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+<a class="btn btn-primary btn-sm pull-right" href="{{ url_for('preferences.managers.create') }}">{{ _('Добавить администратора') }}</a>
+{% endif %}
+{% endblock %}
