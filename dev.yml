@@ -45,7 +45,7 @@ services:
   flower:
     build:
       context: .
-      dockerfile: ./compose/celery/Dockerfile-dev
+      dockerfile: ./compose/django/Dockerfile-dev
     environment:
       - C_FORCE_ROOT="true"
       - USE_DOCKER=yes
@@ -86,7 +86,7 @@ services:
   celeryworker:
     build:
       context: .
-      dockerfile: ./compose/celery/Dockerfile-dev
+      dockerfile: ./compose/django/Dockerfile-dev
     environment:
       - POSTGRES_USER=sample
       - C_FORCE_ROOT="true"
