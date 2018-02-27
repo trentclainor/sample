@@ -40,9 +40,9 @@ Create DB scheme:
 ```
 Create DB in database and change in settings/common.py
 ```bash
-    $ python manage.py createdb
-    $ python manage.py create-admin
-    $ python manage.py runserver
+    $ python manage.py migrate
+    $ python manage.py migrate
+    $ python manage.py runserver_plus
 ```
 
 ## Deployment
