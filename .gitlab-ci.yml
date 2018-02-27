@@ -1,0 +1,27 @@
+image: docker:latest
+
+variables:
+  DOCKER_DRIVER: overlay
+
+services:
+- docker:dind
+
+before_script:
+- docker info
+- apk update
+- apk upgrade
+- apk add python python-dev py-pip build-base
+- pip install docker-compose
+
+test:
+  script:
+  - docker-compose -f dev.yml build
+  - docker-compose -f dev.yml run django python manage.py test --settings=config.settings.test
+
+#staging:
+#  type: deploy
+#  only:
+#  - dev
+#  script:
+#  - export ANSIBLE_HOST_KEY_CHECKING=False
+#  - ansible-playbook -i ansible_files/hosts ansible_files/deploy_staging.yml -l host0 -e "HOST=$IP_ADDRESS USERNAME=$USERNAME PASSWORD=$PASSWORD" --vault-password-file ~/.vault_pass.txt

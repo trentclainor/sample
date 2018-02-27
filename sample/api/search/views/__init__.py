@@ -1,0 +1,3 @@
+from .job_profile import SearchJobProfileViewSet
+from .vacancy_standard import SearchVacancyStandardViewSet
+from .vacancy_personalized import SearchVacancyPersonalizedViewSet

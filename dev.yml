@@ -1,0 +1,106 @@
+version: '2.1'
+
+volumes:
+  postgres_data: {}
+  redisdata: {}
+  staticfiles: {}
+
+services:
+#  image: postgres:9.6-alpine
+  image: postgres:10.2-alpine
+  postgres:
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=sample
+    ports:
+       - "5433:5432"
+    restart: always
+
+  django:
+    build:
+      context: .
+      dockerfile: ./compose/django/Dockerfile-dev
+    command: /start-dev.sh
+    depends_on:
+      - postgres
+      - redis
+      - celeryworker
+    environment:
+      - POSTGRES_USER=sample
+      - USE_DOCKER=yes
+    volumes:
+      - .:/app
+      - staticfiles:/app/sample/static
+    ports:
+      - "8000:8000"
+    links:
+      - postgres
+
+  redis:
+    image: redis:latest
+    volumes:
+      - redisdata:/data
+    restart: always
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./compose/django/Dockerfile-dev
+    environment:
+      - C_FORCE_ROOT="true"
+      - USE_DOCKER=yes
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+    command: celery flower --port=5555 --debug --broker=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    restart: always
+
+  selenium:
+    image: selenium/hub:3.8.1-chlorine
+    environment:
+      JAVA_OPTS: -Dselenium.LOGGER.level=WARNING
+    ports:
+     - 4444:4444
+    restart: always
+
+  chrome:
+    image: selenium/node-chrome:3.8.1-chlorine
+    shm_size: 1G
+    environment:
+      JAVA_OPTS: -Dselenium.LOGGER.level=WARNING -Xmx512m
+      DBUS_SESSION_BUS_ADDRESS: /dev/null
+      SCREEN_WIDTH: 1600
+      SCREEN_HEIGHT: 1200
+      HUB_HOST: selenium
+      NODE_MAX_INSTANCES: 2
+      NODE_MAX_SESSION: 2
+    depends_on:
+      - selenium
+    volumes:
+      - /dev/shm:/dev/shm
+    restart: always
+
+  celeryworker:
+    build:
+      context: .
+      dockerfile: ./compose/celery/Dockerfile-dev
+    environment:
+      - POSTGRES_USER=sample
+      - C_FORCE_ROOT="true"
+      - USE_DOCKER=yes
+      - TIMESTAMP
+      - VERSION
+      - REVISION
+      - ENVIRONMENT
+    depends_on:
+      - postgres
+      - redis
+      - flower
+    volumes:
+      - .:/app
+    command: celery -A sample.taskapp worker -B -Q celery -l debug -s /tmp/celery-schedule -n sample@%h
+    restart: always

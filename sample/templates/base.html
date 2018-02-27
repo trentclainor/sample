@@ -1,0 +1,35 @@
+{% load staticfiles %}
+{% load custom_tags %}
+{% is_production as is_production %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>sample</title>
+    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+
+
+    {% if is_production %}
+      <link rel="stylesheet" href="{% static 'dist/styles.css' %}">
+    {% endif %}
+  </head>
+
+  <body>
+
+    <div id="app">Loading...</div>
+
+    {% if is_production %}
+      <script src="{% static 'dist/bundle.js' %}"></script>
+    {% else %}
+      <script src="http://{% get_host request %}:8888/bundle.js"></script>
+    {% endif %}
+
+    {% include_raven %}
+  </body>
+</html>

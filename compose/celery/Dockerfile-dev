@@ -1,0 +1,16 @@
+FROM python:3.6.2
+
+ENV PYTHONUNBUFFERED 1
+
+RUN apt-get -qq update
+RUN apt-get -yqq install gettext-base
+
+
+# Requirements have to be pulled and installed here, otherwise caching won't work
+COPY ./requirements /requirements
+RUN pip install --upgrade pip
+RUN pip install -r /requirements/local.txt
+
+WORKDIR /app
+
+ENTRYPOINT ["/entrypoint.sh"]

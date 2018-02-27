@@ -1,0 +1,3 @@
+from .job_profile import SearchJobProfileSerializer
+from .vacancy_personalized import SearchVacancyPersonalizedSerializer
+from .vacancy_standard import SearchVacancyStandardSerializer

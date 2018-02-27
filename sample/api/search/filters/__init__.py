@@ -1,0 +1,3 @@
+from .job_profile import FilterSearchJobProfile
+from .vacancy_standard import FilterSearchVacancyStandard
+from .vacancy_personalized import FilterSearchVacancyPersonalized

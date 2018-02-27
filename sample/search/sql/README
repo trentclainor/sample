@@ -1,0 +1,15 @@
+pg_dump -h 46.101.34.38 -U skillflofind -d skillflofind -p 5433 -O -s -x -c --if-exists -f initial-data.sql
+
+# remove "SET" in begining file
+
+pg_dump -h 46.101.34.38 -U skillflofind -d skillflofind -p 5433 -O -x --inserts -a -t skills -t titles -t companies -f predefined-data.sql
+
+# to end of file add next:
+
+REFRESH MATERIALIZED VIEW companies_clean;
+REFRESH MATERIALIZED VIEW titles_clean;
+REFRESH MATERIALIZED VIEW cv_skill_correlations;
+REFRESH MATERIALIZED VIEW cand_skill_importance;
+REFRESH MATERIALIZED VIEW posting_skill_correlations;
+REFRESH MATERIALIZED VIEW posting_skill_importance;
+REFRESH MATERIALIZED VIEW cand_job_matches;
