@@ -34,9 +34,9 @@ Create DB scheme:
 ## Development server
 
 ```bash
-    $ virtualenv --prompt="(sample) " .env
+    $ virtualenv --python=python3 --prompt="(sample) " .env
     $ source .env/bin/activate
-    $ pip install -r requirements.txt
+    $ pip install -r requirements/local.txt
 ```
 Create DB in database and change in settings/common.py
 ```bash
