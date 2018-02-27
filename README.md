@@ -41,7 +41,7 @@ Create DB scheme:
 Create DB in database and change in settings/common.py
 ```bash
     $ python manage.py migrate
-    $ python manage.py migrate
+    $ python manage.py createsuperuser
     $ python manage.py runserver_plus
 ```
 
